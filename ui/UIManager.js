@@ -9,5 +9,5 @@ export class UIManager {
     const elements = document.querySelectorAll(".data-wrapper");
     console.log(data, elementName, elementValue);
   }
-
 }
+// some new methods
