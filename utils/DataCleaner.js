@@ -13,11 +13,11 @@ export class DataCleaner {
     let inputs = this.block.querySelectorAll("input, textarea");
 
     inputs.forEach((input) => {
+      input.value = "";
       if (input.type === "checkbox" || input.type === "radio") {
         const checkboxTrigger = input
           .closest("label")
           ?.querySelector(".discounted");
-        input.value = "";
         if (checkboxTrigger && input.value === "") {
           input.checked ? checkboxTrigger.click() : "";
         }
