@@ -12,7 +12,7 @@ export class WidgetManager {
           return;
       }
 
-      console.log("🚀 Загружаем виджет:", widgetLink);
+    //   console.log("🚀 Загружаем виджет:", widgetLink);
 
       const iFrame = document.createElement("iframe");
       iFrame.src = widgetLink;

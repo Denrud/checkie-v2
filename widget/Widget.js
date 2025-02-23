@@ -10,7 +10,7 @@ export class Widget {
   /**
    * Запускает загрузку виджета
    */
-  loadWidget() {
+  async loadWidget() {
     this.widgetManager.loadWidget(this.widgetLink, this.previewWidget, (iframeDoc) => {
       console.log("📄 `iframe` полностью загружен!", iframeDoc);
       // Здесь можно что-то сделать с `iframeDoc`
@@ -20,7 +20,7 @@ export class Widget {
   /**
    * Инициализирует виджет при загрузке страницы
    */
-  initWidget() {
+  async initWidget() {
     window.addEventListener("DOMContentLoaded", () => {
       console.log("🔄 Инициализация виджета...");
       this.loadWidget();
