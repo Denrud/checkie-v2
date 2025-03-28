@@ -1,0 +1,29 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Package lock (лучше не коммитить, если работаешь в команде)
+package-lock.json
+yarn.lock
+
+# VS Code настройки (индивидуальные)
+.vscode/
+
+# Логи и временные файлы
+logs/
+*.log
+*.out
+*.pid
+*.seed
+*.tgz
+*.tar.gz
+
+# ESLint кэш
+.eslintcache
+
+# MacOS системные файлы
+.DS_Store
+
+# Windows системные файлы
+Thumbs.db
