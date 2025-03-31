@@ -9,26 +9,15 @@ export class DragAndDrop {
   async init() {
     // Находим все контейнеры с data-dnd="true"
     const containers = document.querySelectorAll('[data-dnd="true"]');
-    if (!containers.length) {
-      console.warn("⚠️ DragAndDrop: Контейнеры с data-dnd='true' не найдены.");
-    } else {
-      // Добавляем DnD для каждого контейнера
-      containers.forEach((container) => {
-        this.handleDragAndDrop(container);
-      });
-    }
+    containers.forEach((container) => {
+      this.handleDragAndDrop(container);
+    });
 
     // 📌 Находим все `input[type="file"]` на странице
     const fileInputs = document.querySelectorAll('input[type="file"]');
-
-    if (!fileInputs.length) {
-      console.warn("⚠️ Поля input[type='file'] не найдены.");
-    } else {
-      // Добавляем обработчик к каждому найденному input[type="file"]
-      fileInputs.forEach((input) => {
-        this.observeFileInput(input);
-      });
-    }
+    fileInputs.forEach((input) => {
+      this.observeFileInput(input);
+    });
   }
 
   /**
@@ -36,40 +25,30 @@ export class DragAndDrop {
    * @param {HTMLElement} container - Контейнер с data-dnd="true"
    */
   handleDragAndDrop(container) {
-    const input = container
-      .closest("[data-upload-wrapper]")
-      ?.querySelector('input[type="file"]');
+    const input = container.closest("[data-upload-wrapper]")?.querySelector('input[type="file"]');
     if (!input) return;
-
-    // 🎨 Добавляем класс при наведении файла
-    const addDragOverClass = () => container.classList.add("drag-over");
-
-    // 🎨 Удаляем класс при выходе из зоны
-    const removeDragOverClass = () => container.classList.remove("drag-over");
 
     container.addEventListener("dragenter", (event) => {
       event.preventDefault();
-      addDragOverClass();
+      container.classList.add("drag-over");
     });
 
     container.addEventListener("dragover", (event) => {
       event.preventDefault();
-      addDragOverClass();
+      container.classList.add("drag-over");
     });
 
     container.addEventListener("dragleave", (event) => {
       event.preventDefault();
-      removeDragOverClass();
+      container.classList.remove("drag-over");
     });
 
     container.addEventListener("drop", (event) => {
       event.preventDefault();
-      removeDragOverClass();
+      container.classList.remove("drag-over");
 
       const file = event.dataTransfer.files[0];
       if (!file) return;
-
-      console.log("📁 Файл загружен через Drag & Drop:", file);
 
       // 🟢 Эмулируем выбор файла в input[type="file"]
       const dataTransfer = new DataTransfer();
@@ -86,14 +65,9 @@ export class DragAndDrop {
    * @param {HTMLInputElement} input - Поле загрузки файла
    */
   observeFileInput(input) {
-    console.log("✅ Отслеживание input[type='file'] запущено:", input);
-
-    input.addEventListener("change", (event) => {
+    input.addEventListener("change", () => {
       if (input.files.length > 0) {
-        const file = input.files[0]; // Берём загруженный файл
-        console.log("📂 Файл загружен через change:", file);
-
-        this.handleFile(file, input); // Передаём файл в обработку
+        this.handleFile(input.files[0], input);
       }
     });
   }
@@ -124,32 +98,19 @@ export class DragAndDrop {
    * @param {HTMLElement} source - Источник файла (input[type="file"] или DnD контейнер)
    */
   handleFile(file, source) {
-    console.log("🔍 Обработка файла:", file, "Источник:", source);
-
-    // 🏷️ Ищем ближайший `data-upload-wrapper`
     const wrapper = source.closest("[data-upload-wrapper]");
     if (!wrapper) return;
 
-    // Проверяем, является ли файл изображением
     const isImage = file.type.startsWith("image/");
-
     if (isImage) {
-      // Создаём временный URL для отображения изображения
       const imageUrl = URL.createObjectURL(file);
-      console.log("🔗 Ссылка на изображение:", imageUrl);
-
-      // 🏷️ Ищем и обновляем `data-upload-target`
       const img = wrapper.querySelector("[data-upload-target]");
       if (img) {
         img.src = imageUrl;
-      } else {
-        console.warn(
-          "⚠️ Изображение с data-upload-target не найдено внутри data-upload-wrapper."
-        );
       }
     }
 
-    // 🟢 В любом случае, переключаем стили отображения
+    // 🟢 Переключаем стили отображения
     this.toggleFilePreview(wrapper, isImage);
   }
 }
