@@ -31,18 +31,18 @@ export class EventManager {
       element.addEventListener(eventType, handler);
     } 
     else if (selector.startsWith(".")) {
-      // Работаем с классами (навешиваем обработчик на каждый элемент)
-      const elements = document.querySelectorAll(selector);
-      if (elements.length === 0) {
-        console.warn(`⚠️ Элементы с классом "${selector}" не найдены.`);
-        return;
-      }
+      // Используем делегирование событий для динамических элементов
+      handler = (event) => {
+        const target = event.target.closest(selector);
+        if (target) {
+          callback(event);
+        }
+      };
 
-      handler = (event) => callback(event);
-      elements.forEach((el) => el.addEventListener(eventType, handler));
+      document.addEventListener(eventType, handler);
     } 
     else {
-      // Обычный делегированный обработчик для селектора
+      // Работаем с тегами или сложными селекторами
       handler = (event) => {
         if (event.target.matches(selector)) {
           callback(event);
@@ -52,6 +52,34 @@ export class EventManager {
     }
 
     this.events.set(eventKey, handler);
+  }
+
+  /**
+   * Удаляет обработчик события для указанного селектора
+   * @param {string} selector - ID, класс или CSS-селектор
+   * @param {string} eventType - Тип события (например, "click", "change")
+   */
+  removeEvent(selector, eventType) {
+    const eventKey = `${eventType}:${selector}`;
+
+    if (!this.events.has(eventKey)) {
+      console.warn(`⚠️ Обработчик для "${eventKey}" не найден.`);
+      return;
+    }
+
+    const handler = this.events.get(eventKey);
+
+    if (selector.startsWith("#")) {
+      const element = document.getElementById(selector.slice(1));
+      if (element) {
+        element.removeEventListener(eventType, handler);
+      }
+    } 
+    else {
+      document.removeEventListener(eventType, handler);
+    }
+
+    this.events.delete(eventKey);
   }
 
   /**
@@ -66,10 +94,6 @@ export class EventManager {
         if (element) {
           element.removeEventListener(eventType, handler);
         }
-      } 
-      else if (selector.startsWith(".")) {
-        const elements = document.querySelectorAll(selector);
-        elements.forEach((el) => el.removeEventListener(eventType, handler));
       } 
       else {
         document.removeEventListener(eventType, handler);

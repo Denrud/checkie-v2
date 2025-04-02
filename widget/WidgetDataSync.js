@@ -1,18 +1,20 @@
 import { UITools } from "../ui/UITools.js";
 import { CONFIG } from "../core/Config.js";
+import { StorageManager } from "../utils/StorageManager.js";
 
 export class WidgetDataSync {
   constructor() {
     this.uiTools = new UITools();
     this.defaultData = CONFIG.serviceDefaultData;
     this.cache = {}; // Кэширование найденных элементов
+    this.localStorage = new StorageManager();
   }
 
   /**
    * 🔍 Поиск элементов с кэшированием
    */
   finder(fieldName) {
-    console.log(fieldName)
+    console.log(fieldName);
     if (fieldName != '[widget-data-id="page-title"]') {
       if (this.cache[fieldName]) {
         this.log(`⚡️ Используем кэш для ${fieldName}`);
@@ -42,7 +44,7 @@ export class WidgetDataSync {
         return;
       }
 
-      return doc
+      return doc;
     }
   }
 
@@ -220,5 +222,54 @@ export class WidgetDataSync {
       error: "color: #ff0000",
     };
     console.log(`%c${message}`, styles[type] || styles.info);
+  }
+
+  /**
+   * 🔁 Синхронизирует порядок блоков в виджете на основе serviceBlockState
+   */
+  /**
+   * 🔄 Синхронизация порядка блоков из localStorage в iframe
+   */
+  syncOrderFromStorage() {
+    const rawState = localStorage.getItem("serviceBlockState");
+    if (!rawState) {
+      this.log("⚠️ serviceBlockState отсутствует.", "warn");
+      return;
+    }
+
+    let state;
+    try {
+      state = JSON.parse(rawState);
+    } catch (e) {
+      this.log("❌ Ошибка при парсинге serviceBlockState", "error");
+      return;
+    }
+
+    // Присваиваем дефолтные order если нет значения
+    const blockIds = Object.keys(state);
+    blockIds.forEach((blockId, i) => {
+      if (typeof state[blockId].order !== "number") {
+        state[blockId].order = i;
+      }
+    });
+
+    // Устанавливаем порядок во фрейме
+    blockIds.forEach((blockId) => {
+      const order = state[blockId].order;
+
+      const widgetBlocks = this.finder(`[data-id="${blockId}"]`);
+      if (!widgetBlocks || widgetBlocks.length === 0) {
+        this.log(`⚠️ Виджет-блок ${blockId} не найден`, "warn");
+        return;
+      }
+
+      widgetBlocks.forEach((block) => {
+        block.style.order = order;
+        this.log(`🔁 Установлен порядок ${order} для ${blockId}`);
+      });
+    });
+
+    // Сохраняем обновлённое состояние обратно
+    localStorage.setItem("serviceBlockState", JSON.stringify(state));
   }
 }

@@ -5,120 +5,80 @@ import { DataCleaner } from "../utils/DataCleaner.js";
 
 export class UIManager {
   constructor() {
-    this.uiInitializer = new UIInitializer(); // Инициализируем элементы
+    this.uiInitializer = new UIInitializer();
     this.uiTools = new UITools();
     this.widgetUISync = new WidgetDataSync();
   }
 
-  // меняет модель для типа оплат и формы подписки
-  changeModel(elementName, elementValue, model) {
-    console.log(
-      `🔹 Клик по элементу: ${elementName} со значением: ${elementValue}`
-    );
+  /**
+ * 🔼 Добавляет по одному блоку на основе состояния в localStorage
+ */
+addServiceBlock() {
+  const lockKey = "serviceBlockAddingLock";
 
-    // Получаем элемент, который был проинициализирован
-    const targetElement = this.uiInitializer.getElement(model);
-
-    if (!targetElement) {
-      console.warn(`⚠️ Элемент "${model}" не найден среди инициализированных.`);
-      return;
-    }
-
-    console.log("✅ Найден элемент:", targetElement);
-
-    // Преобразуем в массив, если targetElement - не массив
-    const elementsArray = Array.isArray(targetElement)
-      ? targetElement
-      : [targetElement];
-
-    if (elementValue === "subscription") {
-      if (elementsArray.length > 0) {
-        elementsArray.forEach((item) => {
-          this.uiTools.removeClass(item, "w-condition-invisible");
-
-          // Проверяем, существует ли `widgetUISync` и метод `updateRepeatsUI`
-          if (
-            this.widgetUISync &&
-            typeof this.widgetUISync.updateRepeatsUI === "function"
-          ) {
-            this.widgetUISync.updateRepeatsUI(true);
-          } else {
-            console.warn("⚠️ `widgetUISync.updateRepeatsUI` не найден.");
-          }
-        });
-      } else {
-        console.warn(
-          "⚠️ Элементы `targetElement` не найдены для `subscription`."
-        );
-      }
-    }
-
-    if (elementValue === "onetime") {
-      if (elementsArray.length > 0) {
-        elementsArray.forEach((item) => {
-          this.uiTools.addClass(item, "w-condition-invisible");
-          // Проверяем, существует ли `widgetUISync` и метод `updateRepeatsUI`
-          if (
-            this.widgetUISync &&
-            typeof this.widgetUISync.updateRepeatsUI === "function"
-          ) {
-            this.widgetUISync.updateRepeatsUI(false);
-          } else {
-            console.warn("⚠️ `widgetUISync.updateRepeatsUI` не найден.");
-          }
-        });
-      } else {
-        console.warn("⚠️ `onetime`: Нет доступных элементов.");
-      }
-    }
-
-    if (elementValue === "multipleprices") {
-      elementsArray.forEach((item) => {
-        this.uiTools.removeClass(item, "w-condition-invisible");
-      });
-    }
-
-    if (elementValue === "singleprice") {
-      const serviceMessage = this.uiInitializer.getElement("supportMessage");
-      const serviceBtn = this.uiInitializer.getElement("serviceBtn");
-      elementsArray.forEach((item) => {
-        this.uiTools.addClass(item, "w-condition-invisible");
-        this.uiTools.addClass(serviceMessage, "hide");
-        this.uiTools.removeClass(serviceBtn, "hide");
-      });
-      this.removeServiceBlocks();
-    }
+  if (localStorage.getItem(lockKey) === "true") {
+    console.warn("⛔ Добавление уже выполняется. Ждём завершения.");
+    return;
   }
 
-  addServiceBlock() {
-    const serviceBlocks = this.uiInitializer.getElement("serviceItem");
-    const serviceMessage = this.uiInitializer.getElement("supportMessage");
-    const serviceBtn = this.uiInitializer.getElement("serviceBtn");
+  // Устанавливаем лок-флаг
+  localStorage.setItem(lockKey, "true");
 
-    if (!serviceBlocks || serviceBlocks.length === 0) {
-      console.warn("⚠️ Нет доступных сервисных блоков.");
-      return;
-    }
+  const serviceBlocks = this.uiInitializer.getElement("serviceItem");
+  const serviceMessage = this.uiInitializer.getElement("supportMessage");
+  const serviceBtn = this.uiInitializer.getElement("serviceBtn");
 
-    // Фильтруем только скрытые блоки
-    const hiddenBlocks = Array.from(serviceBlocks).filter((item) =>
-      item.classList.contains("w-condition-invisible")
-    );
-
-    if (hiddenBlocks.length > 0) {
-      // Показываем ОДИН скрытый блок за итерацию
-      const blockToShow = hiddenBlocks[0]; // Берем первый найденный скрытый блок
-      this.uiTools.removeClass(blockToShow, "w-condition-invisible");
-      this.widgetUISync.widgetServiceBlocks(blockToShow);
-      this.widgetUISync.updateRepeatsUI(true);
-      console.log(`✅ Добавлен сервисный блок:`, blockToShow);
-    } else {
-      console.warn("⚠️ Все сервисные блоки уже видимы, нет скрытых блоков.");
-      this.uiTools.removeClass(serviceMessage, "hide");
-      this.uiTools.addClass(serviceBtn, "hide");
-    }
+  if (!serviceBlocks || serviceBlocks.length === 0) {
+    console.warn("⚠️ Нет доступных сервисных блоков.");
+    localStorage.removeItem(lockKey);
+    return;
   }
 
+  const state = JSON.parse(localStorage.getItem("serviceBlockState") || "{}");
+  const serviceArray = Array.isArray(serviceBlocks)
+    ? Array.from(serviceBlocks)
+    : [serviceBlocks];
+
+  const hiddenBlock = serviceArray.find((block) => {
+    const id = block.id;
+    return state[id] && state[id].visible === false;
+  });
+
+  if (!hiddenBlock) {
+    console.warn("⚠️ Нет скрытых блоков для добавления.");
+    this.uiTools.removeClass(serviceMessage, "hide");
+    this.uiTools.addClass(serviceBtn, "hide");
+    localStorage.removeItem(lockKey);
+    return;
+  }
+
+  const id = hiddenBlock.id;
+  const currentOrder = Object.values(state).filter((s) => s.visible).length;
+
+  this.uiTools.removeClass(hiddenBlock, "w-condition-invisible");
+  hiddenBlock.style.order = currentOrder;
+
+  state[id].visible = true;
+  state[id].order = currentOrder;
+
+  localStorage.setItem("serviceBlockState", JSON.stringify(state));
+
+  this.widgetUISync.widgetServiceBlocks(hiddenBlock);
+  this.widgetUISync.updateRepeatsUI(true);
+
+  console.log(`✅ Добавлен блок ${id} с порядком ${currentOrder}`);
+
+  // Сбрасываем флаг через 100ms
+  setTimeout(() => {
+    localStorage.removeItem(lockKey);
+  }, 100);
+
+}
+
+
+  /**
+   * 🔁 Очистка и скрытие всех блоков, кроме первого
+   */
   removeServiceBlocks() {
     const serviceBlocks = this.uiInitializer.getElement("serviceItem");
 
@@ -131,50 +91,109 @@ export class UIManager {
       ? Array.from(serviceBlocks)
       : [serviceBlocks];
 
-    if (serviceArray.length > 1) {
-      serviceArray.slice(1).forEach((block, index) => {
-        // Находим все поля, которые надо обновить после очистки
-        let inputs = block.querySelectorAll("[data-name]");
-        let checkbox = block.querySelector("label > .discounted");
+    const updatedState = {};
 
-        // Фильтруем только те, у которых data-name содержит "service" или "price"
-        let filteredInputs = Array.from(inputs).filter(
-          (input) => /service|price/i.test(input.dataset.name) // Регистронезависимый поиск
-        );
+    serviceArray.forEach((block, index) => {
+      const id = block.id || `service-${index + 1}`;
 
-        // Очищаем поля внутри удаляемых блоков
-        const cleaner = new DataCleaner({
-          block: block,
-          clickElement: checkbox, // Клик не нужен
-        });
+      if (index === 0) {
+        block.style.order = 0;
+        updatedState[id] = { visible: true, order: 0 };
+        return;
+      }
 
-        cleaner.clearFields(); // Очистка полей
+      const inputs = block.querySelectorAll("[data-name]");
+      const checkbox = block.querySelector("label > .discounted");
 
-        // Принудительно обновляем виджет с пустыми значениями только для нужных полей
-        filteredInputs.forEach((input) => {
-          const fieldName = input.dataset.name;
-          this.widgetUISync.updateWidgetFields(fieldName, ""); // Передаем пустую строку
-        });
+      const filteredInputs = Array.from(inputs).filter((input) =>
+        /service|price/i.test(input.dataset.name)
+      );
 
-        // Скрываем блок
-        this.uiTools.addClass(block, "w-condition-invisible");
-
-        // Синхронизация с виджетом
-        if (
-          this.widgetUISync &&
-          typeof this.widgetUISync.widgetServiceBlocks === "function"
-        ) {
-          this.widgetUISync.widgetServiceBlocks(block, true);
-        } else {
-          console.warn("⚠️ `widgetUISync.widgetServiceBlocks` не найден.");
-        }
+      const cleaner = new DataCleaner({
+        block: block,
+        clickElement: checkbox,
       });
 
-      console.log(
-        `✅ Удалены дополнительные сервисные блоки, остался только первый.`
-      );
-    } else {
-      console.warn("⚠️ Нечего удалять, только один сервисный блок.");
+      cleaner.clearFields();
+
+      filteredInputs.forEach((input) => {
+        const fieldName = input.dataset.name;
+        this.widgetUISync.updateWidgetFields(fieldName, "");
+      });
+
+      this.uiTools.addClass(block, "w-condition-invisible");
+      block.style.order = index;
+
+      if (
+        this.widgetUISync &&
+        typeof this.widgetUISync.widgetServiceBlocks === "function"
+      ) {
+        this.widgetUISync.widgetServiceBlocks(block, true);
+      }
+
+      updatedState[id] = { visible: false, order: index };
+    });
+
+    localStorage.setItem("serviceBlockState", JSON.stringify(updatedState));
+    console.log("🧹 Блоки сброшены и скрыты (кроме первого):", updatedState);
+    // 🧩 Новая строка — обновление порядка в виджете
+    if (
+      this.widgetUISync &&
+      typeof this.widgetUISync.syncOrderFromStorage === "function"
+    ) {
+      this.widgetUISync.syncOrderFromStorage();
     }
   }
+  
+
+  /**
+   * 🔄 Модель: подписка, разовая, множественные цены
+   */
+  changeModel(elementName, elementValue, model) {
+    console.log(`🔹 Клик по элементу: ${elementName} со значением: ${elementValue}`);
+
+    const targetElement = this.uiInitializer.getElement(model);
+    if (!targetElement) {
+      console.warn(`⚠️ Элемент "${model}" не найден среди инициализированных.`);
+      return;
+    }
+
+    const elementsArray = Array.isArray(targetElement)
+      ? targetElement
+      : [targetElement];
+
+    if (elementValue === "subscription") {
+      elementsArray.forEach((item) => {
+        this.uiTools.removeClass(item, "w-condition-invisible");
+        this.widgetUISync?.updateRepeatsUI?.(true);
+      });
+    }
+
+    if (elementValue === "onetime") {
+      elementsArray.forEach((item) => {
+        this.uiTools.addClass(item, "w-condition-invisible");
+        this.widgetUISync?.updateRepeatsUI?.(false);
+      });
+    }
+
+    if (elementValue === "multipleprices") {
+      elementsArray.forEach((item) => {
+        this.uiTools.removeClass(item, "w-condition-invisible");
+      });
+    }
+
+    if (elementValue === "singleprice") {
+      const serviceMessage = this.uiInitializer.getElement("supportMessage");
+      const serviceBtn = this.uiInitializer.getElement("serviceBtn");
+
+      elementsArray.forEach((item) => {
+        this.uiTools.addClass(item, "w-condition-invisible");
+        this.uiTools.addClass(serviceMessage, "hide");
+        this.uiTools.removeClass(serviceBtn, "hide");
+      });
+
+      this.removeServiceBlocks();
+    }
+  }
+
 }

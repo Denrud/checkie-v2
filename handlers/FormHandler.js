@@ -1,11 +1,14 @@
 import { UIManager } from "../ui/UIManager.js";
+import { UIMenuManager } from "../ui/UIMenuManager.js";
 import { CONFIG } from "../core/Config.js";
 import { StorageManager } from "../utils/StorageManager.js";
 
 export class FormHandler {
-  constructor(widgetSync) {
+  constructor(widgetSync, uiInitializer) {
     this.widgetSync = widgetSync;
+    this.uiInitializer = uiInitializer;
     this.uiManager = new UIManager();
+    this.UiMenuManager = new UIMenuManager();
     this.libLink = CONFIG.currencySymbols;
     this.storage = new StorageManager("customFields").getData();
   }
@@ -27,7 +30,7 @@ export class FormHandler {
    */
   async handleInputChange(event) {
     const input = event.target;
-    console.log(input.type, input.value)
+    console.log(input.type, input.value);
     const fieldName = input.dataset.name;
     const value =
       input.type === "select-one" && input.value.length === 3
@@ -108,6 +111,48 @@ export class FormHandler {
     this.uiManager.addServiceBlock();
   }
 
+  /**
+   * 🎯 Обработчик кнопок меню по атрибуту [option]
+   */
+  handleOptionClick(event) {
+    const target = event.target;
+
+    // Проверяем, есть ли атрибут option у элемента
+    const action = target.getAttribute("option");
+    if (!action) return;
+
+    // Ищем родительский блок (например, service-wrapper)
+    const parentBlock = target.closest(CONFIG.uiElements.serviceItem);
+    if (!parentBlock) {
+      console.warn("❌ Родительский блок не найден.");
+      return;
+    }
+
+    const blockId = parentBlock.id;
+
+    console.log("✅ Обнаружено действие:", {
+      action,
+      blockId,
+      button: target,
+      block: parentBlock,
+    });
+
+    // Дальнейшие действия зависят от действия
+    switch (action) {
+      case "up":
+        this.UiMenuManager.changeOrder(parentBlock, -1);
+        break;
+      case "down":
+        this.UiMenuManager.changeOrder(parentBlock, 1);
+        break;
+      case "delete":
+        this.UiMenuManager.removeSingleServiceBlock(parentBlock);
+        break;
+      default:
+        console.warn(`⚠️ Неизвестное действие: ${action}`);
+    }
+  }
+
   handleDiscountChange(event) {
     const inputElement = event.target;
     const inputName = inputElement.dataset.name.replace("-checkbox", "");
@@ -121,13 +166,11 @@ export class FormHandler {
     }
 
     if (inputElement.checked) {
-
       this.widgetSync.discountFieldsUI(
         inputName,
         inputElement.checked,
         discountInput
       );
-
     } else {
       discountInput.value = "";
       this.widgetSync.discountFieldsUI(
