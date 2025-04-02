@@ -110,7 +110,7 @@ export class WidgetDataSync {
    */
   updateFileUpload(inputName, file) {
     const widgetFields = this.finder(`[widget-data-id="${inputName}"]`);
-
+    
     if (!widgetFields || widgetFields.length === 0) {
       this.log(`⚠️ Поля с widget-data-id="${inputName}" не найдены.`, "warn");
       return;

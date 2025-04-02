@@ -2,11 +2,13 @@ import { UIManager } from "../ui/UIManager.js";
 import { UIMenuManager } from "../ui/UIMenuManager.js";
 import { CONFIG } from "../core/Config.js";
 import { StorageManager } from "../utils/StorageManager.js";
+import { UIInitializer } from "../ui/UIinitializer.js";
+import { WidgetDataSync } from "../widget/WidgetDataSync.js";
 
 export class FormHandler {
-  constructor(widgetSync, uiInitializer) {
-    this.widgetSync = widgetSync;
-    this.uiInitializer = uiInitializer;
+  constructor() {
+    this.widgetSync = new WidgetDataSync();
+    this.uiInitializer = new UIInitializer();
     this.uiManager = new UIManager();
     this.UiMenuManager = new UIMenuManager();
     this.libLink = CONFIG.currencySymbols;
@@ -155,29 +157,39 @@ export class FormHandler {
 
   handleDiscountChange(event) {
     const inputElement = event.target;
-    const inputName = inputElement.dataset.name.replace("-checkbox", "");
+    console.log("🟡 Сработал handleDiscountChange", inputElement);
+
+    const inputName = inputElement.dataset.name?.replace("-checkbox", "");
+    console.log("🔠 Имя поля скидки:", inputName);
+
     const triggerElement = inputElement
       .closest("label")
       ?.querySelector(".discounted");
+    console.log(
+      "🎯 Discount trigger найден:",
+      !!triggerElement,
+      triggerElement
+    );
+
     const discountInput = document.querySelector(`[data-name="${inputName}"]`);
     if (!discountInput) {
-      console.warn("Discount input not found");
+      console.warn(
+        "❌ Discount input не найден:",
+        `[data-name="${inputName}"]`
+      );
       return;
     }
 
+    console.log("✅ Discount input найден:", discountInput);
+    console.log("📦 Состояние чекбокса:", inputElement.checked);
+
     if (inputElement.checked) {
-      this.widgetSync.discountFieldsUI(
-        inputName,
-        inputElement.checked,
-        discountInput
-      );
+      console.log("🟢 Применяем скидку...");
+      this.widgetSync.discountFieldsUI(inputName, true, discountInput);
     } else {
+      console.log("🔴 Сброс скидки...");
       discountInput.value = "";
-      this.widgetSync.discountFieldsUI(
-        inputName,
-        inputElement.checked,
-        discountInput
-      );
+      this.widgetSync.discountFieldsUI(inputName, false, discountInput);
     }
   }
 }

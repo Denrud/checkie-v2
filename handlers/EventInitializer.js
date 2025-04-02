@@ -47,14 +47,21 @@ export class EventInitializer {
       this.formHandler.handleSupportMessage(event);
     });
 
-    this.eventManager.addEvent(CONFIG.uiElements.repeats, "change", (event) => {
-      this.formHandler.handleDiscountChange(event);
-    });
+    // this.eventManager.addEvent(CONFIG.uiElements.repeats, "change", (event) => {
+    //   this.formHandler.handleDiscountChange(event);
+    // });
 
     this.eventManager.addEvent("[option]", "click", (event) => {
       this.formHandler.handleOptionClick(event);
     });
-  
+
+    this.eventManager.addEvent('.remove-image, .remove-file', 'click', (event) => {
+      this.formHandler.handleImageRemove(event);
+    })
+
+    this.eventManager.addEvent("input[type='checkbox']", "change", (event) => {
+      this.formHandler.handleDiscountChange(event);
+    });
 
     console.log("✅ Слушатели событий инициализированы!");
   }
