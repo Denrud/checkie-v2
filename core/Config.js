@@ -33,5 +33,15 @@ export const CONFIG = {
     { id: "pagetitle", data: "set-store-name" },
   ],
 
+  ATTR: {
+    MIRROR_CONTAINER: 'data-mirror-group',   // Обертка источника с элементами (mirror)
+    ITEM_ID: 'data-id',                      // Атрибут уникального ID каждого элемента
+    GROUP_BLOCK: 'data-group',               // Название группы (main, other и т.д.)
+    GROUP_REF: 'data-mirror',                // Ссылка на mirror-группу
+    GROUP_SOURCE: 'data-group-source',       // Скрытый блок с изначальным списком из базы
+    GROUP_VARIANT: 'data-variant',           // Количество элементов в main (если дефолт)
+    INPUT_SYNC: 'data-sync',                 // Скрытый input для синхронизации (value)
+  },
+
   currencySymbols: "https://esm.run/currency-symbols",
 };
