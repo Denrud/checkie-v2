@@ -47,10 +47,7 @@ export class EventInitializer {
       this.formHandler.handleSupportMessage(event);
     });
 
-    // this.eventManager.addEvent(CONFIG.uiElements.repeats, "change", (event) => {
-    //   this.formHandler.handleDiscountChange(event);
-    // });
-
+  
     this.eventManager.addEvent("[option]", "click", (event) => {
       this.formHandler.handleOptionClick(event);
     });
@@ -62,6 +59,11 @@ export class EventInitializer {
     this.eventManager.addEvent("input[type='checkbox']", "change", (event) => {
       this.formHandler.handleDiscountChange(event);
     });
+
+    this.eventManager.addEvent(CONFIG.uiElements.menuOption, "click", (event) => {
+      this.formHandler.handleMenuOptionClick(event);
+    });
+    
 
     console.log("✅ Слушатели событий инициализированы!");
   }

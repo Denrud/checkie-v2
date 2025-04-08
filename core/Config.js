@@ -19,6 +19,9 @@ export const CONFIG = {
     optionWrapper: ".option-wrapper", // Обертка кнопок управления
     moveUpBtn: ".move-up", // Кнопка перемещения вверх
     moveDownBtn: ".move-down", // Кнопка перемещения вниз
+    menuTrigger: "[data-menu-trigger]",
+    menuOption: "[data-menu-option]",
+    optionItem: "[data-id]", 
   },
 
   localStorageKeys: {

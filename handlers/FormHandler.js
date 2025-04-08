@@ -44,7 +44,7 @@ export class FormHandler {
     this.widgetSync.updateWidgetFields(fieldName, value);
   }
 
-  handleSelectChanged(event) {
+  async handleSelectChanged(event) {
     const select = event.target;
     const selectName = select.dataset.name;
     console.log(select, selectName);
@@ -52,7 +52,7 @@ export class FormHandler {
   /**
    * 📂 Обрабатывает загрузку картинки
    */
-  handleImageUpload(event) {
+  async handleImageUpload(event) {
     const inputName = event.target.name;
     const file = event.target.files[0]; // Получаем первый файл из списка
     console.log(inputName, file);
@@ -60,14 +60,14 @@ export class FormHandler {
     console.log("📂 Файл загружен", file);
   }
 
-  handleImageRemove(event) {
+  async handleImageRemove(event) {
     const inputName = event.target.dataset.name || null;
     this.widgetSync.updateFileUpload(inputName, null);
     console.log("📂 Файл удален");
     console.log(inputName);
   }
 
-  handleRadioButtonChange(event) {
+  async handleRadioButtonChange(event) {
     const input = event.target;
     const radioName = input.dataset.name;
     const radioValue = input.value;
@@ -83,7 +83,7 @@ export class FormHandler {
     }
   }
 
-  handlerSubmitted(event) {
+  async handlerSubmitted(event) {
     const formId = event.target.closest("form").id;
     const form = document.querySelector(`#${formId}`); // Находим форму Webflow
     let pollingInterval; // Переменная для хранения интервала
@@ -109,14 +109,14 @@ export class FormHandler {
     }
   }
 
-  handlerAddService(event) {
+  async handlerAddService(event) {
     this.uiManager.addServiceBlock();
   }
 
   /**
    * 🎯 Обработчик кнопок меню по атрибуту [option]
    */
-  handleOptionClick(event) {
+  async handleOptionClick(event) {
     const target = event.target;
 
     // Проверяем, есть ли атрибут option у элемента
@@ -155,7 +155,7 @@ export class FormHandler {
     }
   }
 
-  handleDiscountChange(event) {
+  async handleDiscountChange(event) {
     const inputElement = event.target;
     console.log("🟡 Сработал handleDiscountChange", inputElement);
 
@@ -191,5 +191,14 @@ export class FormHandler {
       discountInput.value = "";
       this.widgetSync.discountFieldsUI(inputName, false, discountInput);
     }
+  }
+
+  /**
+   * 🎯 Обработка клика по опции меню внутри группы (main, other, disable, active)
+   * @param {MouseEvent} event
+   */
+  async handleMenuOptionClick(event) {
+    const { UIMenuOptions } = await import("../ui/UIMenuOptions.js");
+    UIMenuOptions.handleOption(event);
   }
 }
